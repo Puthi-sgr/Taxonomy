@@ -7,7 +7,6 @@ import Components from "./pages/Components";
 import NotFound from "./pages/NotFound";
 import TaxonomyGraph from "./components/concepts/TaxonomyGraph";
 import { TaxonomyProvider } from "./context/TaxonomyContext";
-import taxonomyData from "./TaxonomyData/TaxonomyData";
 
 function App() {
   return (
