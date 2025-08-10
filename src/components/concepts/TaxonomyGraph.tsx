@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { hierarchy, tree as d3tree } from "d3-hierarchy";
 import { motion } from "framer-motion";
@@ -96,6 +97,16 @@ const TaxonomyGraph = () => {
   const ROOT_ID = TAXONOMY_DATA.id;
   // Expanded nodes: start with root expanded so first-level children show
   const [expanded, setExpanded] = useState<Set<string>>(new Set([ROOT_ID]));
+  const hasFitRef = useRef(false);
+
+  // When the taxonomy changes, reset the expanded set so the new tree starts
+  // from a clean state. Also reset the fit flag so the view recenters.
+  useEffect(() => {
+    setExpanded(new Set([ROOT_ID]));
+    hasFitRef.current = false;
+    setSelected(null);
+    setTooltip((t) => ({ ...t, visible: false }));
+  }, [ROOT_ID]);
 
   // Pan/zoom state
   const [scale, setScale] = useState(1);
@@ -118,7 +129,7 @@ const TaxonomyGraph = () => {
 
   const visibleData = useMemo(
     () => buildVisibleTree(TAXONOMY_DATA, expanded, 0, 1),
-    [expanded]
+    [expanded, TAXONOMY_DATA]
   );
 
   // Layout the visible tree
@@ -155,7 +166,6 @@ const TaxonomyGraph = () => {
   }, [visibleData, dims.height]);
 
   // Fit-to-screen initially
-  const hasFitRef = useRef(false);
   const fitToScreen = React.useCallback(() => {
     if (!nodes.length || !dims.width || !dims.height) return;
     const pad = 48;

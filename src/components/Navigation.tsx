@@ -7,11 +7,9 @@ import { TaxonomyContext } from "../context/TaxonomyContext";
 const Navigation: React.FC = () => {
   const location = useLocation();
   const { setTaxonomy } = React.useContext(TaxonomyContext);
-  const [currentTaxonomy, setCurrentTaxonomy] = React.useState("");
 
-  const handleTaxonomyChange = (newTaxonomy: any) => {
+  const handleTaxonomyChange = (newTaxonomy: string) => {
     setTaxonomy(newTaxonomy);
-    setCurrentTaxonomy(newTaxonomy);
   };
 
   const navItems = [
@@ -55,8 +53,6 @@ const Navigation: React.FC = () => {
             onSelectTaxonomy={(selectedTaxonomy) => {
               console.log("Selected Taxonomy:", selectedTaxonomy);
               handleTaxonomyChange(selectedTaxonomy);
-
-              setTaxonomy(selectedTaxonomy);
             }}
           />
         </div>
