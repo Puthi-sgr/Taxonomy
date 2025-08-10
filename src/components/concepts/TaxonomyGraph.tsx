@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { hierarchy, tree as d3tree } from "d3-hierarchy";
 import { motion } from "framer-motion";
 import { ZoomIn, ZoomOut, Home, Minimize2, Expand } from "lucide-react";
+import { TaxonomyNode, SelectedItem } from "../../TaxonomyData/Taxonomy.dto";
+import { TaxonomyContext } from "../../context/TaxonomyContext";
+import taxonomyData from "../../TaxonomyData/TaxonomyData";
 
 /**
  * Taxonomy Tree Visualizer
@@ -16,87 +19,6 @@ import { ZoomIn, ZoomOut, Home, Minimize2, Expand } from "lucide-react";
  */
 
 // ---------------- Taxonomy data & types ---------------- //
-
-export interface TaxonomyDetails {
-  commands?: string[];
-  tips?: string[];
-}
-
-export interface TaxonomyNode {
-  id: string;
-  name: string;
-  description?: string;
-  details?: TaxonomyDetails;
-  children?: TaxonomyNode[];
-}
-
-const TAXONOMY_DATA: TaxonomyNode = {
-  id: "frontend",
-  name: "Frontend Development",
-  description: "Building user interfaces for the web.",
-  children: [
-    {
-      id: "languages",
-      name: "Languages",
-      description: "Core languages of the web.",
-      details: {
-        commands: ["HTML", "CSS", "JavaScript"],
-        tips: ["Learn semantics", "Keep CSS modular"],
-      },
-      children: [
-        { id: "html", name: "HTML", description: "Structure of web pages." },
-        { id: "css", name: "CSS", description: "Styling and layout." },
-        {
-          id: "javascript",
-          name: "JavaScript",
-          description: "Dynamic behavior.",
-        },
-      ],
-    },
-    {
-      id: "frameworks",
-      name: "Frameworks",
-      description: "Tools to build complex UIs.",
-      children: [
-        {
-          id: "react",
-          name: "React",
-          description: "Component-based library.",
-        },
-        { id: "vue", name: "Vue", description: "Progressive framework." },
-        {
-          id: "angular",
-          name: "Angular",
-          description: "Full-featured framework.",
-        },
-      ],
-    },
-    {
-      id: "tooling",
-      name: "Tooling",
-      description: "Build and automation tools.",
-      children: [
-        {
-          id: "bundlers",
-          name: "Bundlers",
-          description: "Webpack, Vite.",
-        },
-        {
-          id: "linters",
-          name: "Linters",
-          description: "ESLint, Stylelint.",
-        },
-        {
-          id: "testing",
-          name: "Testing",
-          description: "Jest, Vitest.",
-        },
-      ],
-    },
-  ],
-};
-
-const ROOT_ID = TAXONOMY_DATA.id;
 
 // Utility: build a pruned tree that only includes children when parent is expanded
 function buildVisibleTree(
@@ -164,6 +86,14 @@ interface GraphNode extends TaxonomyNode {
 }
 
 const TaxonomyGraph = () => {
+  const { taxonomy } = React.useContext(TaxonomyContext);
+  // Dynamically set TAXONOMY_DATA based on the selected taxonomy
+  const TAXONOMY_DATA: TaxonomyNode = taxonomyData[taxonomy] || {
+    id: "root",
+    name: "No Data",
+  };
+
+  const ROOT_ID = TAXONOMY_DATA.id;
   // Expanded nodes: start with root expanded so first-level children show
   const [expanded, setExpanded] = useState<Set<string>>(new Set([ROOT_ID]));
 
@@ -181,7 +111,7 @@ const TaxonomyGraph = () => {
   });
 
   // Selection for info bar
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<SelectedItem | null>(null);
 
   const containerRef = useRef(null);
   const dims = useContainerSize(containerRef);
@@ -195,7 +125,7 @@ const TaxonomyGraph = () => {
   const { nodes, links } = useMemo(() => {
     const height = Math.max(dims.height - 120, 560);
 
-    const root = hierarchy(visibleData);
+    const root: any = hierarchy(visibleData);
 
     const treeLayout = d3tree()
       .nodeSize([56, 200])
@@ -203,7 +133,7 @@ const TaxonomyGraph = () => {
 
     const laid = treeLayout(root);
 
-    const nodes = laid.descendants().map((d) => ({
+    const nodes = laid.descendants().map((d: any) => ({
       id: d.data.id,
       name: d.data.name,
       description: d.data.description,
@@ -214,9 +144,9 @@ const TaxonomyGraph = () => {
       data: d.data,
     }));
 
-    const nodeById = new Map(nodes.map((n) => [n.id, n]));
+    const nodeById = new Map(nodes.map((n: any) => [n.id, n]));
 
-    const links = laid.links().map((l) => ({
+    const links = laid.links().map((l: any) => ({
       source: nodeById.get(l.source.data.id),
       target: nodeById.get(l.target.data.id),
     }));
@@ -255,13 +185,13 @@ const TaxonomyGraph = () => {
     }
   }, [fitToScreen]);
 
-  function zoom(delta) {
+  function zoom(delta: number) {
     setScale((s) => Math.max(0.3, Math.min(2.2, s + delta)));
   }
 
   // Drag to pan
   const dragState = useRef({ dragging: false, x: 0, y: 0, tx: 0, ty: 0 });
-  function onPointerDown(e) {
+  function onPointerDown(e: any) {
     dragState.current = {
       dragging: true,
       x: e.clientX,
@@ -270,7 +200,7 @@ const TaxonomyGraph = () => {
       ty,
     };
   }
-  function onPointerMove(e) {
+  function onPointerMove(e: any) {
     if (!dragState.current.dragging) return;
     const dx = e.clientX - dragState.current.x;
     const dy = e.clientY - dragState.current.y;
@@ -309,7 +239,8 @@ const TaxonomyGraph = () => {
       <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/70 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold tracking-tight">
-            Frontend Taxonomy
+            {taxonomy || "Didn't load"}
+            {taxonomyData[taxonomy]?.name}
           </span>
           <span className="text-xs text-slate-500">
             hover for info • click to expand
@@ -319,12 +250,12 @@ const TaxonomyGraph = () => {
           <TB onClick={() => zoom(0.15)} title="Zoom in">
             <ZoomIn className="h-4 w-4" /> <span>Zoom in</span>
           </TB>
-            <TB onClick={() => zoom(-0.15)} title="Zoom out">
-              <ZoomOut className="h-4 w-4" /> <span>Zoom out</span>
-            </TB>
-            <TB onClick={fitToScreen} title="Fit to screen">
-              <Home className="h-4 w-4" /> <span>Fit</span>
-            </TB>
+          <TB onClick={() => zoom(-0.15)} title="Zoom out">
+            <ZoomOut className="h-4 w-4" /> <span>Zoom out</span>
+          </TB>
+          <TB onClick={fitToScreen} title="Fit to screen">
+            <Home className="h-4 w-4" /> <span>Fit</span>
+          </TB>
           <TB onClick={expandAll} title="Expand all">
             <Expand className="h-4 w-4" /> <span>Expand all</span>
           </TB>
@@ -374,7 +305,7 @@ const TaxonomyGraph = () => {
           </defs>
           <g transform={`translate(${tx},${ty}) scale(${scale})`}>
             {/* Links */}
-            {links.map((l, i) => (
+            {links.map((l: any, i) => (
               <path
                 key={`link-${i}`}
                 d={linkPath(l.source, l.target)}
@@ -384,7 +315,7 @@ const TaxonomyGraph = () => {
             ))}
 
             {/* Nodes */}
-            {nodes.map((n) => (
+            {nodes.map((n: any) => (
               <Node
                 key={n.id}
                 node={n}
@@ -586,9 +517,10 @@ function findNodeById(
 }
 
 // Observe container size
-function useContainerSize(
-  ref: React.RefObject<HTMLDivElement>
-): { width: number; height: number } {
+function useContainerSize(ref: React.RefObject<HTMLDivElement>): {
+  width: number;
+  height: number;
+} {
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!ref.current) return;
