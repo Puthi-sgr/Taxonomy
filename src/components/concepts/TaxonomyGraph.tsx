@@ -6,6 +6,7 @@ import { ZoomIn, ZoomOut, Home, Minimize2, Expand } from "lucide-react";
 import { TaxonomyNode, SelectedItem } from "../../TaxonomyData/Taxonomy.dto";
 import { TaxonomyContext } from "../../context/TaxonomyContext";
 import taxonomyData from "../../TaxonomyData/TaxonomyData";
+import { graphConfig } from "./GraphConfig";
 
 /**
  * Taxonomy Tree Visualizer
@@ -139,8 +140,15 @@ const TaxonomyGraph = () => {
     const root: any = hierarchy(visibleData);
 
     const treeLayout = d3tree()
-      .nodeSize([56, 200])
-      .separation((a, b) => (a.parent === b.parent ? 1 : 1.25));
+      .nodeSize([
+        graphConfig.nodeVerticalSpacing,
+        graphConfig.nodeHorizontalSpacing,
+      ])
+      .separation((a, b) =>
+        a.parent === b.parent
+          ? graphConfig.siblingSeparation
+          : graphConfig.nonSiblingSeparation
+      );
 
     const laid = treeLayout(root);
 
@@ -318,8 +326,8 @@ const TaxonomyGraph = () => {
               <path
                 key={`link-${i}`}
                 d={linkPath(l.source, l.target)}
-                className="fill-none stroke-slate-300"
-                strokeWidth={2}
+                className={graphConfig.linkClass}
+                strokeWidth={graphConfig.linkStrokeWidth}
               />
             ))}
 
@@ -443,8 +451,8 @@ function Node({ node, isExpanded, onHover, onMove, onClick }: NodeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hover]);
 
-  const r = 20;
-  const labelPadX = 14;
+  const r = graphConfig.nodeRadius;
+  const labelPadX = graphConfig.labelPaddingX;
 
   return (
     <g
@@ -468,9 +476,10 @@ function Node({ node, isExpanded, onHover, onMove, onClick }: NodeProps) {
         {/* Node bubble */}
         <circle
           r={r}
-          className={`fill-white stroke-2 ${
+          className={`fill-white ${
             node.hasChildren ? "stroke-blue-400" : "stroke-slate-300"
           }`}
+          strokeWidth={graphConfig.nodeStrokeWidth}
           filter="url(#softShadow)"
         />
         {/* Plus/chevron indicator */}
@@ -496,7 +505,7 @@ function Node({ node, isExpanded, onHover, onMove, onClick }: NodeProps) {
                 ? "fill-blue-50 stroke-blue-300"
                 : "fill-white/90 stroke-slate-200"
             }`}
-            strokeWidth={1.5}
+            strokeWidth={graphConfig.labelStrokeWidth}
           />
           <text
             x={labelPadX}
