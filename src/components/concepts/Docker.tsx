@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ZoomIn, ZoomOut, Home, Minimize2, Expand } from "lucide-react";
 
 /**
- * Docker Taxonomy Tree Visualizer — Expanded
+ * Taxonomy Tree Visualizer
  * -----------------------------------------
  * • Nodes connect to their parent concept
  * • Hover a node: shows description tooltip
@@ -12,686 +12,99 @@ import { ZoomIn, ZoomOut, Home, Minimize2, Expand } from "lucide-react";
  * • Drag to pan; scroll (or buttons) to zoom
  * • Toolbar: Zoom in/out, Fit to screen, Expand All, Collapse All
  *
- * What's new in this expanded version:
- * - Much richer taxonomy with deeper concepts
- * - Per-node details: key commands & tips/gotchas in the info panel
+ * This component is generic and renders any hierarchical taxonomy.
  */
 
-// --- Docker taxonomy data (expanded) --- //
-const DOCKER_TAXONOMY = {
-  id: "docker",
-  name: "Docker",
-  description:
-    "Docker is a platform to build, ship, and run apps in lightweight containers, backed by images.",
-  details: {
-    commands: [
-      "docker version",
-      "docker info",
-      "docker help",
-      "docker context ls",
-    ],
-    tips: [
-      "Use contexts to target remote engines or cloud environments.",
-      "Prefer BuildKit for faster, cache-efficient builds.",
-    ],
-  },
+// ---------------- Taxonomy data & types ---------------- //
+
+export interface TaxonomyDetails {
+  commands?: string[];
+  tips?: string[];
+}
+
+export interface TaxonomyNode {
+  id: string;
+  name: string;
+  description?: string;
+  details?: TaxonomyDetails;
+  children?: TaxonomyNode[];
+}
+
+const TAXONOMY_DATA: TaxonomyNode = {
+  id: "frontend",
+  name: "Frontend Development",
+  description: "Building user interfaces for the web.",
   children: [
     {
-      id: "images",
-      name: "Images",
-      description:
-        "Immutable blueprints created from layers; referenced by tags or content-addressable digests.",
+      id: "languages",
+      name: "Languages",
+      description: "Core languages of the web.",
       details: {
-        commands: [
-          "docker build -t app:1 .",
-          "docker images",
-          "docker history app:1",
-          "docker inspect app:1",
-          "docker buildx build --platform linux/amd64,linux/arm64 -t app:multi .",
-        ],
-        tips: [
-          "Pin base images by digest for repeatability (FROM node@sha256:...).",
-          "Use multi-stage builds to keep final images small.",
-          "Avoid `latest` in production; tag with immutable versions.",
-        ],
+        commands: ["HTML", "CSS", "JavaScript"],
+        tips: ["Learn semantics", "Keep CSS modular"],
       },
       children: [
+        { id: "html", name: "HTML", description: "Structure of web pages." },
+        { id: "css", name: "CSS", description: "Styling and layout." },
         {
-          id: "layers",
-          name: "Layers",
-          description:
-            "Each image is a stack of read‑only layers (copy-on-write). Cache reuses unchanged steps.",
-          details: {
-            tips: [
-              "Order Dockerfile steps to maximize cache hits (install deps before copying source).",
-              "Combine RUN steps wisely; avoid invalidating cache unnecessarily.",
-            ],
-          },
-          children: [
-            {
-              id: "union-fs",
-              name: "UnionFS",
-              description:
-                "Union filesystems (e.g., overlay2) present multiple layers as one coherent tree.",
-            },
-          ],
-        },
-        {
-          id: "tags",
-          name: "Tags",
-          description:
-            "Human-friendly labels (e.g., :1.20-alpine) pointing at an image digest.",
-          details: {
-            tips: [
-              "Use semantic tags (:1, :1.2, :1.2.3) plus a stable :prod tag for rollout.",
-              "Automate retagging on release to keep provenance clear.",
-            ],
-          },
-        },
-        {
-          id: "digests",
-          name: "Digests",
-          description:
-            "Content-addressed identifiers (sha256:...) ensuring exact image bytes are used.",
-        },
-        {
-          id: "manifest-list",
-          name: "Manifest List (Multi‑arch)",
-          description:
-            "An index that points to architecture-specific images so pulls match the client platform.",
-        },
-        {
-          id: "oci",
-          name: "OCI Image Spec",
-          description:
-            "Open Container Initiative spec defines image format and metadata layout.",
+          id: "javascript",
+          name: "JavaScript",
+          description: "Dynamic behavior.",
         },
       ],
     },
     {
-      id: "dockerfile",
-      name: "Dockerfile",
-      description:
-        "Recipe to build images with instructions like FROM, RUN, COPY, CMD, ENTRYPOINT.",
-      details: {
-        commands: ["docker build -f Dockerfile -t app .", "docker buildx bake"],
-        tips: [
-          "Prefer explicit `COPY --chown` to set ownership.",
-          "Use `.dockerignore` to keep build context small.",
-          "Use exec-form for CMD/ENTRYPOINT to avoid shell signal issues.",
-        ],
-      },
+      id: "frameworks",
+      name: "Frameworks",
+      description: "Tools to build complex UIs.",
       children: [
         {
-          id: "instructions",
-          name: "Instructions",
-          description:
-            "FROM, RUN, COPY/ADD, EXPOSE, ENV, ARG, WORKDIR, USER, VOLUME, LABEL, CMD, ENTRYPOINT.",
+          id: "react",
+          name: "React",
+          description: "Component-based library.",
         },
+        { id: "vue", name: "Vue", description: "Progressive framework." },
         {
-          id: "multistage",
-          name: "Multi‑stage Builds",
-          description:
-            "Build artifacts in one stage and copy only essentials into a tiny final image.",
-          details: {
-            tips: [
-              "Name stages (AS builder) and `COPY --from=builder` to final stage.",
-            ],
-          },
-        },
-        {
-          id: "healthcheck",
-          name: "HEALTHCHECK",
-          description:
-            "Command for the engine to evaluate container health (healthy/unhealthy).",
-        },
-        {
-          id: "buildkit",
-          name: "BuildKit",
-          description:
-            "Modern builder enabling parallel builds, mounts (RUN --mount), secrets, and better caching.",
-          details: {
-            tips: [
-              "Use `RUN --mount=type=cache` to speed up package managers.",
-              "Use `RUN --mount=type=secret` to avoid baking secrets into layers.",
-            ],
-          },
-        },
-        {
-          id: "dockerignore",
-          name: ".dockerignore",
-          description:
-            "Exclude files from the build context (node_modules, .git, build artifacts).",
+          id: "angular",
+          name: "Angular",
+          description: "Full-featured framework.",
         },
       ],
     },
     {
-      id: "containers",
-      name: "Containers",
-      description:
-        "Isolated processes created from images with a thin writable layer and namespaces.",
-      details: {
-        commands: [
-          "docker run --rm -it alpine sh",
-          "docker ps -a",
-          "docker logs -f <id>",
-          "docker exec -it <id> sh",
-          "docker stop <id> && docker rm <id>",
-        ],
-        tips: [
-          "Use `--rm` for ephemeral runs to auto-clean.",
-          "Set restart policies for long-running services.",
-          "Prefer healthchecks and graceful SIGTERM handling.",
-        ],
-      },
+      id: "tooling",
+      name: "Tooling",
+      description: "Build and automation tools.",
       children: [
         {
-          id: "lifecycle",
-          name: "Lifecycle",
-          description:
-            "Create → Start → (Running) → Stop/Exit → Remove; also Paused & Restarted states.",
-          children: [
-            {
-              id: "restart-policies",
-              name: "Restart Policies",
-              description:
-                "no | on-failure | always | unless-stopped; governs auto-restarts.",
-            },
-            {
-              id: "logs",
-              name: "Logs & TTY",
-              description:
-                "Stream stdout/stderr; attach interactive TTY; choose log drivers.",
-            },
-            {
-              id: "resources",
-              name: "Resources",
-              description:
-                "Limit CPU/memory/pids/blkio; monitor via `docker stats`.",
-            },
-          ],
+          id: "bundlers",
+          name: "Bundlers",
+          description: "Webpack, Vite.",
         },
         {
-          id: "networking",
-          name: "Networking",
-          description:
-            "Join networks, resolve container names via embedded DNS, and publish/expose ports.",
-          children: [
-            {
-              id: "ports",
-              name: "Ports",
-              description: "expose vs -p host:container mapping.",
-            },
-            {
-              id: "dns",
-              name: "DNS",
-              description: "Automatic service discovery by container name.",
-            },
-            {
-              id: "aliases",
-              name: "Aliases",
-              description: "Add extra DNS names per network.",
-            },
-          ],
+          id: "linters",
+          name: "Linters",
+          description: "ESLint, Stylelint.",
         },
         {
-          id: "storage",
-          name: "Ephemeral Storage",
-          description:
-            "Writable layer lives with the container; durable data should use volumes/binds.",
-          children: [
-            {
-              id: "overlay2",
-              name: "overlay2",
-              description: "Default storage driver on Linux.",
-            },
-            {
-              id: "tmpfs",
-              name: "tmpfs",
-              description: "In-memory mount for sensitive or fast I/O.",
-            },
-          ],
-        },
-        {
-          id: "entrypoint",
-          name: "ENTRYPOINT vs CMD",
-          description:
-            "ENTRYPOINT defines the executable; CMD provides default args (or command if no entrypoint).",
-        },
-      ],
-    },
-    {
-      id: "volumes",
-      name: "Volumes",
-      description:
-        "Managed storage that survives container removal and supports drivers & sharing.",
-      details: {
-        commands: [
-          "docker volume create data",
-          "docker run -v data:/var/lib/app ...",
-          "docker volume ls",
-          "docker volume inspect data",
-        ],
-        tips: [
-          "Prefer named volumes for portability; use bind mounts for local dev.",
-          "Use `:ro` for mounts that shouldn't be written.",
-        ],
-      },
-      children: [
-        {
-          id: "types",
-          name: "Types",
-          description:
-            "Named volumes, anonymous volumes, and bind mounts to host paths.",
-        },
-        {
-          id: "drivers",
-          name: "Drivers",
-          description:
-            "local (default), nfs, smb, cloud providers via plugins.",
-        },
-        {
-          id: "backup",
-          name: "Backup/Restore",
-          description:
-            "Use tar or dedicated tools to snapshot/restore volume contents.",
-        },
-      ],
-    },
-    {
-      id: "networks",
-      name: "Networks",
-      description:
-        "Connectivity between containers via drivers, subnets, IPAM, and DNS-based discovery.",
-      details: {
-        commands: [
-          "docker network create mynet",
-          "docker network ls",
-          "docker network inspect mynet",
-          "docker run --network=mynet ...",
-        ],
-        tips: [
-          "Bridge is default on a single host; overlay spans multiple nodes (Swarm).",
-          "Use network aliases for stable service names.",
-        ],
-      },
-      children: [
-        {
-          id: "bridge",
-          name: "Bridge",
-          description: "Default local network; NAT to host.",
-        },
-        {
-          id: "host",
-          name: "Host",
-          description: "Share host network stack (no isolation).",
-        },
-        { id: "none", name: "None", description: "No network connectivity." },
-        {
-          id: "overlay",
-          name: "Overlay",
-          description: "Multi-host VXLAN overlay for Swarm.",
-        },
-        {
-          id: "macvlan",
-          name: "Macvlan",
-          description: "Give containers their own MAC on LAN.",
-        },
-      ],
-    },
-    {
-      id: "compose",
-      name: "Docker Compose",
-      description:
-        "YAML spec to define multi-container apps; `docker compose up` manages the lifecycle.",
-      details: {
-        commands: [
-          "docker compose up -d",
-          "docker compose logs -f service",
-          "docker compose down -v",
-          "docker compose --profile dev up",
-        ],
-        tips: [
-          "`depends_on` doesn't wait for health by default; use healthchecks or wait scripts.",
-          "Split overrides into multiple -f files for environments.",
-        ],
-      },
-      children: [
-        {
-          id: "services",
-          name: "Services",
-          description: "Containers plus config as units.",
-        },
-        {
-          id: "env",
-          name: "Env & Secrets",
-          description: ".env files, secret injection.",
-        },
-        {
-          id: "profiles",
-          name: "Profiles",
-          description: "Enable/disable subsets of services.",
-        },
-        {
-          id: "netvol",
-          name: "Networks & Volumes",
-          description: "Define shared resources.",
-        },
-        {
-          id: "scale",
-          name: "Scale",
-          description: "Run N replicas with --scale.",
-        },
-        {
-          id: "deploy",
-          name: "Deploy (Swarm)",
-          description: "Compose fields for Swarm mode.",
-        },
-      ],
-    },
-    {
-      id: "registry",
-      name: "Registry",
-      description:
-        "Stores and serves images for push/pull. Examples: Docker Hub, GHCR, private registries.",
-      details: {
-        commands: [
-          "docker login",
-          "docker tag app:1 myrepo/app:1",
-          "docker push myrepo/app:1",
-          "docker pull myrepo/app:1",
-        ],
-        tips: [
-          "Use access tokens over passwords for CI.",
-          "Consider image signing and provenance (e.g., cosign/Notary).",
-        ],
-      },
-      children: [
-        {
-          id: "hub",
-          name: "Docker Hub",
-          description: "Public registry with namespaces.",
-        },
-        {
-          id: "ghcr",
-          name: "GHCR",
-          description: "GitHub Container Registry hosting.",
-        },
-        {
-          id: "harbor",
-          name: "Harbor",
-          description: "Open-source enterprise registry with policies.",
-        },
-        {
-          id: "auth",
-          name: "Auth & Trust",
-          description:
-            "Login with tokens; enable signing and enforce retention or scanning policies.",
-        },
-        {
-          id: "caches",
-          name: "Caches/Proxies",
-          description:
-            "Registry mirrors and pull-through caches reduce latency and rate-limit issues.",
-        },
-      ],
-    },
-    {
-      id: "orchestration",
-      name: "Orchestration",
-      description:
-        "Run containers across many machines with schedulers, health checks, and service discovery.",
-      details: {
-        tips: [
-          "Swarm is simple and integrated; Kubernetes is feature-rich and ubiquitous.",
-        ],
-      },
-      children: [
-        {
-          id: "swarm",
-          name: "Swarm",
-          description:
-            "Native orchestrator (services, stacks, secrets, configs).",
-          children: [
-            {
-              id: "svc",
-              name: "Services",
-              description: "Desired-state tasks with updates.",
-            },
-            {
-              id: "nodes",
-              name: "Nodes",
-              description: "Managers and workers in a cluster.",
-            },
-            {
-              id: "secrets",
-              name: "Secrets",
-              description: "Encrypted at rest and in transit.",
-            },
-            {
-              id: "stacks",
-              name: "Stacks",
-              description: "Compose‑like bundles for Swarm.",
-            },
-            {
-              id: "update",
-              name: "Updates/Rollback",
-              description: "Control batch size/delay/rollback.",
-            },
-          ],
-        },
-        {
-          id: "k8s",
-          name: "Kubernetes",
-          description:
-            "Industry-standard orchestrator; Docker images run via a CRI runtime (containerd).",
-          children: [
-            {
-              id: "pods",
-              name: "Pods",
-              description: "Smallest schedulable unit; 1+ containers.",
-            },
-            {
-              id: "deploy",
-              name: "Deployments",
-              description: "Declarative rollout/rollback.",
-            },
-            {
-              id: "svc-k8s",
-              name: "Services",
-              description: "Stable virtual IPs for pods.",
-            },
-            {
-              id: "ingress",
-              name: "Ingress",
-              description: "HTTP routing and TLS termination.",
-            },
-            {
-              id: "configmap",
-              name: "ConfigMaps",
-              description: "Inject non-secret config.",
-            },
-            {
-              id: "secret-k8s",
-              name: "Secrets",
-              description: "Base64 encoded, better with KMS.",
-            },
-            {
-              id: "pvc",
-              name: "PVCs",
-              description: "PersistentVolumeClaims for storage.",
-            },
-            {
-              id: "daemonset",
-              name: "DaemonSets",
-              description: "Run one per node (e.g., agents).",
-            },
-            {
-              id: "statefulset",
-              name: "StatefulSets",
-              description: "Stable identities and storage.",
-            },
-            {
-              id: "jobs",
-              name: "Jobs/CronJobs",
-              description: "Batch and scheduled workloads.",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "security",
-      name: "Security",
-      description:
-        "Isolation via namespaces & cgroups; harden with capabilities, seccomp, AppArmor/SELinux.",
-      details: {
-        tips: [
-          "Drop capabilities by default; grant only what's needed.",
-          "Run as non-root (USER); consider rootless mode.",
-          "Enable a strict seccomp profile and use read-only filesystems where possible.",
-        ],
-      },
-      children: [
-        {
-          id: "namespaces",
-          name: "Namespaces",
-          description: "PID, NET, MNT, UTS, IPC, USER.",
-        },
-        {
-          id: "cgroups",
-          name: "cgroups v2",
-          description: "Resource accounting and limits.",
-        },
-        {
-          id: "caps",
-          name: "Capabilities",
-          description: "Fine‑grained kernel privileges.",
-        },
-        {
-          id: "seccomp",
-          name: "seccomp",
-          description: "Syscall filtering profile.",
-        },
-        {
-          id: "apparmor",
-          name: "AppArmor/SELinux",
-          description: "Mandatory access control.",
-        },
-        {
-          id: "rootless",
-          name: "Rootless",
-          description: "Run Docker/containers without root.",
-        },
-        {
-          id: "scan",
-          name: "Scanning",
-          description: "Scan images for CVEs and SBOMs.",
-        },
-      ],
-    },
-    {
-      id: "daemon",
-      name: "CLI & Daemon",
-      description:
-        "dockerd exposes an API; docker CLI talks to it; contexts select local/remote endpoints.",
-      details: {
-        commands: [
-          "docker context create",
-          "docker context use <name>",
-          "docker system df",
-          "docker system prune",
-          "docker events",
-        ],
-        tips: [
-          "Tune daemon.json (log-driver, storage-driver, default-address-pools).",
-          "Use `docker buildx` and `docker compose` subcommands for modern workflows.",
-        ],
-      },
-      children: [
-        {
-          id: "dockerd",
-          name: "dockerd",
-          description: "The Docker daemon process.",
-        },
-        {
-          id: "cli",
-          name: "docker CLI",
-          description: "User commands: build, run, push, etc.",
-        },
-        {
-          id: "api",
-          name: "API",
-          description: "HTTP API used by CLI and tools.",
-        },
-        {
-          id: "context",
-          name: "Contexts",
-          description: "Switch between local/remote endpoints.",
-        },
-        {
-          id: "logs-driver",
-          name: "Log Drivers",
-          description: "json-file, journald, syslog, fluentd, etc.",
-        },
-      ],
-    },
-    {
-      id: "observability",
-      name: "Observability",
-      description:
-        "Understand container behavior with logs, metrics, traces, and engine events.",
-      children: [
-        {
-          id: "logs-obs",
-          name: "Logs",
-          description: "Per-container logs and centralized drivers.",
-        },
-        {
-          id: "metrics",
-          name: "Metrics",
-          description: "cAdvisor/containerd metrics; engine metrics.",
-        },
-        {
-          id: "events",
-          name: "Events",
-          description: "Real-time engine events stream.",
-        },
-      ],
-    },
-    {
-      id: "runtimes",
-      name: "Runtimes",
-      description:
-        "Under the hood: containerd manages images & containers; runc creates Linux containers.",
-      children: [
-        {
-          id: "containerd",
-          name: "containerd",
-          description: "Core runtime used by Docker & K8s.",
-        },
-        {
-          id: "runc",
-          name: "runc",
-          description: "OCI runtime that spawns containers.",
-        },
-        {
-          id: "shim",
-          name: "Shim",
-          description: "Per-container process supervising the runtime.",
-        },
-        {
-          id: "alt",
-          name: "Alt Sandboxes",
-          description: "gVisor, Kata for stronger isolation.",
+          id: "testing",
+          name: "Testing",
+          description: "Jest, Vitest.",
         },
       ],
     },
   ],
 };
 
+const ROOT_ID = TAXONOMY_DATA.id;
+
 // Utility: build a pruned tree that only includes children when parent is expanded
-function buildVisibleTree(data, expandedIds, depth = 0, alwaysShowDepth = 1) {
+function buildVisibleTree(
+  data: TaxonomyNode,
+  expandedIds: Set<string>,
+  depth = 0,
+  alwaysShowDepth = 1
+): TaxonomyNode {
   const node = { ...data };
   const showChildren = depth < alwaysShowDepth || expandedIds.has(data.id);
   if (node.children && node.children.length) {
@@ -705,7 +118,7 @@ function buildVisibleTree(data, expandedIds, depth = 0, alwaysShowDepth = 1) {
 }
 
 // Collect ids of all nodes with children
-function idsWithChildren(node, out = new Set()) {
+function idsWithChildren(node: TaxonomyNode, out: Set<string> = new Set()) {
   if (node.children && node.children.length) {
     out.add(node.id);
     node.children.forEach((c) => idsWithChildren(c, out));
@@ -714,7 +127,7 @@ function idsWithChildren(node, out = new Set()) {
 }
 
 // Compute a smooth cubic path between two points for links
-function linkPath(from, to) {
+function linkPath(from: GraphNode, to: GraphNode) {
   const x0 = from.x;
   const y0 = from.y;
   const x1 = to.x;
@@ -724,7 +137,13 @@ function linkPath(from, to) {
 }
 
 // Tailwind-friendly button
-function TB({ onClick, title, children }) {
+interface TBProps {
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+function TB({ onClick, title, children }: TBProps) {
   return (
     <button
       onClick={onClick}
@@ -736,9 +155,17 @@ function TB({ onClick, title, children }) {
   );
 }
 
-const Docker = () => {
+interface GraphNode extends TaxonomyNode {
+  depth: number;
+  x: number;
+  y: number;
+  hasChildren: boolean;
+  data: TaxonomyNode;
+}
+
+const TaxonomyGraph = () => {
   // Expanded nodes: start with root expanded so first-level children show
-  const [expanded, setExpanded] = useState(new Set(["docker"]));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set([ROOT_ID]));
 
   // Pan/zoom state
   const [scale, setScale] = useState(1);
@@ -759,13 +186,13 @@ const Docker = () => {
   const containerRef = useRef(null);
   const dims = useContainerSize(containerRef);
 
-  const visibleData = useMemo(() => {
-    return buildVisibleTree(DOCKER_TAXONOMY, expanded, 0, 1);
-  }, [expanded]);
+  const visibleData = useMemo(
+    () => buildVisibleTree(TAXONOMY_DATA, expanded, 0, 1),
+    [expanded]
+  );
 
   // Layout the visible tree
   const { nodes, links } = useMemo(() => {
-    const width = Math.max(dims.width - 24, 640);
     const height = Math.max(dims.height - 120, 560);
 
     const root = hierarchy(visibleData);
@@ -795,18 +222,11 @@ const Docker = () => {
     }));
 
     return { nodes, links };
-  }, [visibleData, dims.width, dims.height]);
+  }, [visibleData, dims.height]);
 
   // Fit-to-screen initially
   const hasFitRef = useRef(false);
-  useEffect(() => {
-    if (!hasFitRef.current) {
-      fitToScreen();
-      hasFitRef.current = true;
-    }
-  }, [nodes.length, dims.width, dims.height]);
-
-  function fitToScreen() {
+  const fitToScreen = React.useCallback(() => {
     if (!nodes.length || !dims.width || !dims.height) return;
     const pad = 48;
     const xs = nodes.map((n) => n.x);
@@ -826,7 +246,14 @@ const Docker = () => {
     const cy = (minY + maxY) / 2;
     setTx(dims.width / 2 - cy * s);
     setTy((dims.height - 80) / 2 - cx * s);
-  }
+  }, [nodes, dims.width, dims.height]);
+
+  useEffect(() => {
+    if (!hasFitRef.current) {
+      fitToScreen();
+      hasFitRef.current = true;
+    }
+  }, [fitToScreen]);
 
   function zoom(delta) {
     setScale((s) => Math.max(0.3, Math.min(2.2, s + delta)));
@@ -854,8 +281,8 @@ const Docker = () => {
     dragState.current.dragging = false;
   }
 
-  function toggle(id) {
-    const hasKidsInFull = !!findNodeById(DOCKER_TAXONOMY, id)?.children?.length;
+  function toggle(id: string) {
+    const hasKidsInFull = !!findNodeById(TAXONOMY_DATA, id)?.children?.length;
     if (!hasKidsInFull) return;
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -866,11 +293,11 @@ const Docker = () => {
   }
 
   function expandAll() {
-    const all = idsWithChildren(DOCKER_TAXONOMY);
+    const all = idsWithChildren(TAXONOMY_DATA);
     setExpanded(all);
   }
   function collapseAll() {
-    setExpanded(new Set(["docker"]));
+    setExpanded(new Set([ROOT_ID]));
   }
 
   return (
@@ -882,7 +309,7 @@ const Docker = () => {
       <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/70 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold tracking-tight">
-            Docker Taxonomy (Expanded)
+            Frontend Taxonomy
           </span>
           <span className="text-xs text-slate-500">
             hover for info • click to expand
@@ -892,12 +319,12 @@ const Docker = () => {
           <TB onClick={() => zoom(0.15)} title="Zoom in">
             <ZoomIn className="h-4 w-4" /> <span>Zoom in</span>
           </TB>
-          <TB onClick={() => zoom(-0.15)} title="Zoom out">
-            <ZoomOut className="h-4 w-4" /> <span>Zoom out</span>
-          </TB>
-          <TB onClick={fitToScreen} title="Fit to screen">
-            <Home className="h-4 w-4" /> <span>Fit</span>
-          </TB>
+            <TB onClick={() => zoom(-0.15)} title="Zoom out">
+              <ZoomOut className="h-4 w-4" /> <span>Zoom out</span>
+            </TB>
+            <TB onClick={fitToScreen} title="Fit to screen">
+              <Home className="h-4 w-4" /> <span>Fit</span>
+            </TB>
           <TB onClick={expandAll} title="Expand all">
             <Expand className="h-4 w-4" /> <span>Expand all</span>
           </TB>
@@ -1060,7 +487,15 @@ const Docker = () => {
   );
 };
 
-function Node({ node, isExpanded, onHover, onMove, onClick }) {
+interface NodeProps {
+  node: GraphNode;
+  isExpanded: boolean;
+  onHover: (state: boolean) => void;
+  onMove: (x: number, y: number) => void;
+  onClick: () => void;
+}
+
+function Node({ node, isExpanded, onHover, onMove, onClick }: NodeProps) {
   const [hover, setHover] = useState(false);
   useEffect(() => {
     if (hover) onHover(true);
@@ -1070,7 +505,6 @@ function Node({ node, isExpanded, onHover, onMove, onClick }) {
 
   const r = 20;
   const labelPadX = 14;
-  const labelPadY = 10;
 
   return (
     <g
@@ -1139,17 +573,22 @@ function Node({ node, isExpanded, onHover, onMove, onClick }) {
 }
 
 // Find a node by id in the full taxonomy
-function findNodeById(node, id) {
+function findNodeById(
+  node: TaxonomyNode,
+  id: string
+): TaxonomyNode | undefined {
   if (node.id === id) return node;
   for (const c of node.children || []) {
     const found = findNodeById(c, id);
     if (found) return found;
   }
-  return null;
+  return undefined;
 }
 
 // Observe container size
-function useContainerSize(ref) {
+function useContainerSize(
+  ref: React.RefObject<HTMLDivElement>
+): { width: number; height: number } {
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!ref.current) return;
@@ -1164,4 +603,4 @@ function useContainerSize(ref) {
   return size;
 }
 
-export default Docker;
+export default TaxonomyGraph;

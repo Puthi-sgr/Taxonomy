@@ -5,8 +5,6 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Components from "./pages/Components";
 import NotFound from "./pages/NotFound";
-import Docker from "./components/Docker";
-
 function App() {
   return (
     <Router>
