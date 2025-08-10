@@ -9,6 +9,7 @@ const taxonomyOptions: TaxonomyOption[] = [
   { value: "docker", label: "Docker" },
   { value: "kubernetes", label: "Kubernetes" },
   { value: "aws", label: "AWS" },
+  { value: "laravel", label: "Laravel" },
   // Add more options as needed
 ];
 

@@ -250,7 +250,6 @@ const TaxonomyGraph = () => {
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold tracking-tight">
             {taxonomy || "Didn't load"}
-            {taxonomyData[taxonomy]?.name}
           </span>
           <span className="text-xs text-slate-500">
             hover for info • click to expand
@@ -313,7 +312,7 @@ const TaxonomyGraph = () => {
               />
             </filter>
           </defs>
-          <g transform={`translate(${tx},${ty}) scale(${scale})`}>
+          <g transform={`translate(${tx + 100},${ty}) scale(${scale})`}>
             {/* Links */}
             {links.map((l: any, i) => (
               <path
@@ -352,7 +351,7 @@ const TaxonomyGraph = () => {
         {/* Tooltip */}
         {tooltip.visible && (
           <div
-            style={{ left: tooltip.x, top: tooltip.y }}
+            style={{ left: tooltip.x, top: tooltip.y, zIndex: 100 }}
             className="pointer-events-none absolute z-30 max-w-xs rounded-xl border border-slate-200 bg-white p-2 text-xs shadow-lg"
           >
             {tooltip.text}
@@ -360,7 +359,7 @@ const TaxonomyGraph = () => {
         )}
 
         {/* Info footer */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 pb-3">
+        <div className="pointer-events-none absolute top-7 -left-[800px] inset-x-0  z-120 px-3 pb-3">
           {selected ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -376,7 +375,7 @@ const TaxonomyGraph = () => {
                     {selected.name}
                   </div>
                   <div className="text-sm text-slate-700">
-                    {selected.description}
+                    {selected.description || "No description"}
                   </div>
                 </div>
                 <div className="text-xs text-slate-500 shrink-0 pl-2">
@@ -417,7 +416,7 @@ const TaxonomyGraph = () => {
               ) : null}
             </motion.div>
           ) : (
-            <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/70 p-3 text-center text-sm text-slate-600 shadow backdrop-blur">
+            <div className="z-10 mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white/70 p-3 text-center text-sm text-slate-600 shadow backdrop-blur">
               Tip: Hover nodes for quick info. Click nodes to reveal
               sub‑concepts and see commands & tips here. Drag the canvas to pan.
             </div>

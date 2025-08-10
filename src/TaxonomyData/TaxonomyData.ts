@@ -1,14 +1,11 @@
 // TaxonomyData.ts
+import { DockerData } from "./DockerData";
+import { LaravelData } from "./LaravelData";
 import { TaxonomyNode } from "./Taxonomy.dto";
 
-const dockerTaxonomy: TaxonomyNode = {
-  id: "docker_root",
-  name: "Docker Root",
-  children: [
-    { id: "docker_image", name: "Docker Image" },
-    { id: "docker_container", name: "Docker Container" },
-  ],
-};
+const dockerTaxonomy: TaxonomyNode = DockerData;
+
+const laravelTaxonomy: TaxonomyNode = LaravelData;
 
 const kubernetesTaxonomy: TaxonomyNode = {
   id: "kubernetes_root",
@@ -22,6 +19,7 @@ const kubernetesTaxonomy: TaxonomyNode = {
 const taxonomyData: { [key: string]: TaxonomyNode } = {
   docker: dockerTaxonomy,
   kubernetes: kubernetesTaxonomy,
+  laravel: laravelTaxonomy,
 };
 
 export default taxonomyData;
