@@ -372,7 +372,7 @@ const TaxonomyGraph = () => {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="pointer-events-auto mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white/85 p-4 shadow backdrop-blur"
+              className="pointer-events-auto mx-auto w-1/2 max-w-4xl rounded-2xl border border-slate-200 bg-white/85 p-4 shadow backdrop-blur"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

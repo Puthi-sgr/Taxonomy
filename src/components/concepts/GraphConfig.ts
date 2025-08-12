@@ -15,13 +15,13 @@ export const graphConfig: GraphConfig = {
   linkStrokeWidth: 2,
   linkClass: "fill-none stroke-slate-300",
   nodeRadius: 20,
-  nodeStrokeWidth: 2,
+  nodeStrokeWidth: 1,
   labelPaddingX: 14,
   labelStrokeWidth: 1.5,
-  nodeVerticalSpacing: 56,
-  nodeHorizontalSpacing: 200,
+  nodeVerticalSpacing: 100,
+  nodeHorizontalSpacing: 300,
   siblingSeparation: 1,
-  nonSiblingSeparation: 1.25,
+  nonSiblingSeparation: 1,
 };
 
 export default graphConfig;
