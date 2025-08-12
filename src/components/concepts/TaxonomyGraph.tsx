@@ -125,8 +125,10 @@ const TaxonomyGraph = () => {
   // Selection for info bar
   const [selected, setSelected] = useState<SelectedItem | null>(null);
 
-  const containerRef = useRef(null);
-  const dims = useContainerSize(containerRef);
+  // refs to measure layout dimensions
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const dims = useContainerSize(canvasRef);
 
   const visibleData = useMemo(
     () => buildVisibleTree(TAXONOMY_DATA, expanded, 0, 1),
@@ -209,7 +211,40 @@ const TaxonomyGraph = () => {
 
   // Drag to pan
   const dragState = useRef({ dragging: false, x: 0, y: 0, tx: 0, ty: 0 });
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchState = useRef({
+    active: false,
+    startDist: 0,
+    startScale: 1,
+    startTx: 0,
+    startTy: 0,
+    midpoint: { x: 0, y: 0 },
+    contentX: 0,
+    contentY: 0,
+  });
   function onPointerDown(e: any) {
+    if (e.pointerType === "touch") {
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size === 2) {
+        const [p1, p2] = Array.from(pointers.current.values());
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dist = Math.hypot(dx, dy);
+        const midpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+        pinchState.current = {
+          active: true,
+          startDist: dist,
+          startScale: scale,
+          startTx: tx,
+          startTy: ty,
+          midpoint,
+          contentX: (midpoint.x - tx) / scale,
+          contentY: (midpoint.y - ty) / scale,
+        };
+        dragState.current.dragging = false;
+        return;
+      }
+    }
     dragState.current = {
       dragging: true,
       x: e.clientX,
@@ -219,13 +254,37 @@ const TaxonomyGraph = () => {
     };
   }
   function onPointerMove(e: any) {
+    if (pointers.current.has(e.pointerId)) {
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (pinchState.current.active && pointers.current.size >= 2) {
+      const [p1, p2] = Array.from(pointers.current.values());
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const dist = Math.hypot(dx, dy);
+      let newScale =
+        (dist / pinchState.current.startDist) * pinchState.current.startScale;
+      newScale = Math.max(0.3, Math.min(2.2, newScale));
+      const newTx =
+        pinchState.current.midpoint.x - pinchState.current.contentX * newScale;
+      const newTy =
+        pinchState.current.midpoint.y - pinchState.current.contentY * newScale;
+      setScale(newScale);
+      setTx(newTx);
+      setTy(newTy);
+      return;
+    }
     if (!dragState.current.dragging) return;
     const dx = e.clientX - dragState.current.x;
     const dy = e.clientY - dragState.current.y;
     setTx(dragState.current.tx + dx);
     setTy(dragState.current.ty + dy);
   }
-  function onPointerUp() {
+  function onPointerUp(e: any) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) {
+      pinchState.current.active = false;
+    }
     dragState.current.dragging = false;
   }
 
@@ -249,12 +308,12 @@ const TaxonomyGraph = () => {
   }
 
   return (
-    <div
-      className="w-full h-full min-h-[760px] bg-gradient-to-b from-slate-50 to-slate-100 text-slate-800"
-      ref={containerRef}
-    >
-      {/* Top Bar */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/70 backdrop-blur px-3 py-2">
+      <div
+        className="flex flex-col w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-800"
+        ref={containerRef}
+      >
+        {/* Top Bar */}
+        <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 overflow-x-auto border-b border-slate-200 bg-white/70 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold tracking-tight">
             {taxonomy || "Didn't load"}
@@ -282,28 +341,30 @@ const TaxonomyGraph = () => {
         </div>
       </div>
 
-      {/* Canvas */}
-      <div
-        className="relative h-[calc(100%-56px)] select-none"
-        onPointerMove={(e) => {
-          if (tooltip.visible)
-            setTooltip((t) => ({ ...t, x: e.clientX + 12, y: e.clientY + 12 }));
-          onPointerMove(e);
-        }}
-        onPointerUp={onPointerUp}
-        onPointerDown={onPointerDown}
-        onPointerLeave={onPointerUp}
-        onWheel={(e) => {
-          e.preventDefault();
-          const delta = -Math.sign(e.deltaY) * 0.1;
-          zoom(delta);
-        }}
-      >
-        <svg
-          className="absolute inset-0"
-          width={dims.width}
-          height={dims.height - 56}
+        {/* Canvas */}
+        <div
+          ref={canvasRef}
+          className="relative flex-1 select-none touch-none"
+          onPointerMove={(e) => {
+            if (tooltip.visible)
+              setTooltip((t) => ({ ...t, x: e.clientX + 12, y: e.clientY + 12 }));
+            onPointerMove(e);
+          }}
+          onPointerUp={onPointerUp}
+          onPointerDown={onPointerDown}
+          onPointerLeave={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onWheel={(e) => {
+            e.preventDefault();
+            const delta = -Math.sign(e.deltaY) * 0.1;
+            zoom(delta);
+          }}
         >
+          <svg
+            className="absolute inset-0"
+            width={dims.width}
+            height={dims.height}
+          >
           <defs>
             <filter
               id="softShadow"
@@ -356,18 +417,18 @@ const TaxonomyGraph = () => {
           </g>
         </svg>
 
-        {/* Tooltip */}
-        {tooltip.visible && (
-          <div
-            style={{ left: tooltip.x, top: tooltip.y, zIndex: 100 }}
-            className="pointer-events-none absolute z-30 max-w-xs rounded-xl border border-slate-200 bg-white p-2 text-xs shadow-lg"
-          >
-            {tooltip.text}
-          </div>
-        )}
+          {/* Tooltip */}
+          {tooltip.visible && (
+            <div
+              style={{ left: tooltip.x, top: tooltip.y, zIndex: 100 }}
+              className="pointer-events-none absolute z-30 max-w-xs rounded-xl border border-slate-200 bg-white p-2 text-xs shadow-lg"
+            >
+              {tooltip.text}
+            </div>
+          )}
 
-        {/* Info footer */}
-        <div className="pointer-events-none absolute top-7 -left-[800px] inset-x-0  z-120 px-3 pb-3">
+          {/* Info footer */}
+          <div className="pointer-events-none absolute top-7 left-0 right-0 z-20 px-3 pb-3">
           {selected ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
