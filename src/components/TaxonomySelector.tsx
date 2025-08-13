@@ -15,8 +15,12 @@ const taxonomyOptions: TaxonomyOption[] = [
 
 interface TaxonomySelectorProps {
   onSelectTaxonomy: (selectedTaxonomy: string) => void;
+  className?: string;
 }
-const TaxonomySelector = ({ onSelectTaxonomy }: TaxonomySelectorProps) => {
+const TaxonomySelector = ({
+  onSelectTaxonomy,
+  className,
+}: TaxonomySelectorProps) => {
   const [selectedTaxonomy, setSelectedTaxonomy] = React.useState("docker");
 
   const handleTaxonomyChange = (
@@ -27,7 +31,11 @@ const TaxonomySelector = ({ onSelectTaxonomy }: TaxonomySelectorProps) => {
   };
 
   return (
-    <select value={selectedTaxonomy} onChange={handleTaxonomyChange}>
+    <select
+      value={selectedTaxonomy}
+      onChange={handleTaxonomyChange}
+      className={`p-2 border rounded-md ${className ?? ""}`}
+    >
       {taxonomyOptions.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
